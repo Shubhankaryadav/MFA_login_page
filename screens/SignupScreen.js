@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -11,18 +12,19 @@ const SignupSchema = Yup.object().shape({
 });
 
 const SignupScreen = ({ navigation }) => {
+  const handleSignup = async (values) => {
+    // Perform signup logic here (e.g., API call)
+    // On successful signup:
+    await AsyncStorage.setItem('isAuthenticated', 'true');
+    navigation.replace(values.authMethod === 'Finger Recognition' ? 'Fingerprint' : 'FaceRecognition');
+  };
+
   return (
     <View style={styles.container}>
       <Formik
         initialValues={{ username: '', email: '', authMethod: 'Finger Recognition' }}
         validationSchema={SignupSchema}
-        onSubmit={values => {
-          if (values.authMethod === 'Finger Recognition') {
-            navigation.navigate('Fingerprint');
-          } else {
-            navigation.navigate('FaceRecognition');
-          }
-        }}
+        onSubmit={handleSignup}
       >
         {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors }) => (
           <>

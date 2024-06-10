@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -9,14 +10,19 @@ const LoginSchema = Yup.object().shape({
 });
 
 const LoginScreen = ({ navigation }) => {
+  const handleLogin = async (values) => {
+    // Perform login logic here (e.g., API call)
+    // On successful login:
+    await AsyncStorage.setItem('isAuthenticated', 'true');
+    navigation.replace('Home');
+  };
+
   return (
     <View style={styles.container}>
       <Formik
         initialValues={{ username: '', password: '' }}
         validationSchema={LoginSchema}
-        onSubmit={values => {
-          console.log(values);
-        }}
+        onSubmit={handleLogin}
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
           <>
