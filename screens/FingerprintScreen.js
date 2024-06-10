@@ -1,12 +1,14 @@
-// screens/FingerprintScreen.js
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Button, Alert } from 'react-native';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 
 const FingerprintScreen = ({ navigation }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
     FingerprintScanner.authenticate({ description: 'Scan your fingerprint on the device scanner to continue' })
       .then(() => {
+        setIsAuthenticated(true);
         Alert.alert('Authenticated successfully');
         // Navigate to the next screen or perform any other action
       })
@@ -16,9 +18,11 @@ const FingerprintScreen = ({ navigation }) => {
       });
 
     return () => {
-      FingerprintScanner.release();
+      if (isAuthenticated) {
+        FingerprintScanner.release();
+      }
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <View style={styles.container}>
