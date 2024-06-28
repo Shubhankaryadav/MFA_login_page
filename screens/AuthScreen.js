@@ -1,33 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
-import FingerprintScanner from 'react-native-fingerprint-scanner';
+import { View, Button, Alert, StyleSheet } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthScreen = ({ navigation }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [biometricMethod, setBiometricMethod] = useState('biometric');
 
   useEffect(() => {
-    FingerprintScanner.authenticate({ description: 'Authenticate to continue' })
-      .then(() => {
-        setIsAuthenticated(true);
-        Alert.alert('Authenticated successfully');
-        navigation.replace('Home'); // Navigate to the home screen or main content
-      })
-      .catch(error => {
-        Alert.alert('Authentication failed', error.message);
-        // Handle authentication failure, maybe allow retry
-      });
+    checkBiometricMethod();
+    authenticate();
+  }, []);
 
-    return () => {
-      if (isAuthenticated) {
-        FingerprintScanner.release();
+  const checkBiometricMethod = async () => {
+    const method = await AsyncStorage.getItem('biometricMethod');
+    if (method) {
+      setBiometricMethod(method);
+    }
+  };
+
+  const authenticate = async () => {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+    if (hasHardware && isEnrolled) {
+      let result;
+      if (biometricMethod === 'biometric') {
+        result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Authenticate',
+        });
+      } else if (biometricMethod === 'finger') {
+        result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Authenticate with Finger Recognition',
+        });
+      } else if (biometricMethod === 'face') {
+        result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Authenticate with Face Recognition',
+        });
       }
-    };
-  }, [isAuthenticated]);
+
+      if (result.success) {
+        Alert.alert('Authenticated Successfully');
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Authentication Failed');
+      }
+    } else {
+      Alert.alert('Biometric authentication not available or not enrolled');
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Please authenticate to continue</Text>
-      <Button title="Retry" onPress={() => FingerprintScanner.release() || FingerprintScanner.authenticate()} />
+      <Button title="Authenticate" onPress={authenticate} />
     </View>
   );
 };
@@ -37,10 +61,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  text: {
-    fontSize: 18,
-    marginBottom: 20,
   },
 });
 

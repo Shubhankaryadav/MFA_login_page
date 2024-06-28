@@ -1,63 +1,57 @@
-import React from 'react';
-import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-
-const SignupSchema = Yup.object().shape({
-  username: Yup.string().required('Username is required'),
-  email: Yup.string().email('Invalid email').required('Email is required'),
-  authMethod: Yup.string().required('Authentication method is required'),
-});
 
 const SignupScreen = ({ navigation }) => {
-  const handleSignup = async (values) => {
-    // Perform signup logic here (e.g., API call)
-    // On successful signup:
-    await AsyncStorage.setItem('isAuthenticated', 'true');
-    navigation.replace(values.authMethod === 'Finger Recognition' ? 'Fingerprint' : 'FaceRecognition');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [biometricMethod, setBiometricMethod] = useState('biometric');
+
+  const handleSignup = async () => {
+    if (username && email && password) {
+      await AsyncStorage.setItem('isAuthenticated', 'true');
+      await AsyncStorage.setItem('biometricMethod', biometricMethod);
+      Alert.alert('Signup Successful');
+      navigation.navigate('Home');
+    } else {
+      Alert.alert('Please fill all fields');
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Formik
-        initialValues={{ username: '', email: '', authMethod: 'Finger Recognition' }}
-        validationSchema={SignupSchema}
-        onSubmit={handleSignup}
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Picker
+        selectedValue={biometricMethod}
+        onValueChange={(itemValue) => setBiometricMethod(itemValue)}
+        style={styles.picker}
       >
-        {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors }) => (
-          <>
-            <TextInput
-              style={styles.input}
-              onChangeText={handleChange('username')}
-              onBlur={handleBlur('username')}
-              value={values.username}
-              placeholder="Username"
-            />
-            {errors.username && <Text style={styles.error}>{errors.username}</Text>}
-            <TextInput
-              style={styles.input}
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
-              value={values.email}
-              placeholder="Email"
-            />
-            {errors.email && <Text style={styles.error}>{errors.email}</Text>}
-            <Picker
-              selectedValue={values.authMethod}
-              onValueChange={(itemValue) => setFieldValue('authMethod', itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Finger Recognition" value="Finger Recognition" />
-              <Picker.Item label="Face Recognition" value="Face Recognition" />
-            </Picker>
-            {errors.authMethod && <Text style={styles.error}>{errors.authMethod}</Text>}
-            <Button onPress={handleSubmit} title="Signup" />
-            <Button onPress={() => navigation.navigate('Login')} title="Go to Login" />
-          </>
-        )}
-      </Formik>
+        <Picker.Item label="Biometric" value="biometric" />
+        <Picker.Item label="Finger Recognition" value="finger" />
+        <Picker.Item label="Face Recognition" value="face" />
+      </Picker>
+      <Button title="Signup" onPress={handleSignup} />
+      <Button title="Login" onPress={() => navigation.navigate('Login')} />
     </View>
   );
 };
@@ -66,22 +60,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   input: {
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 10,
+    marginBottom: 12,
+    paddingHorizontal: 8,
   },
   picker: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 10,
-  },
-  error: {
-    color: 'red',
+    height: 50,
+    width: '100%',
+    marginBottom: 12,
   },
 });
 
